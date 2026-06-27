@@ -1,6 +1,6 @@
-# UPI Offline Mesh — Demo
+# Offline UPI Engine in Spring Boot
 
-Building a Zero-Connectivity UPI Settlement Engine in Spring Boot
+Building a Zero-Connectivity(Offline) UPI Settlement Engine in Spring Boot
 Imagine being trapped in a concrete basement with absolutely no cellular network, yet successfully transferring ₹500 to a friend. This project demonstrates how offline UPI payloads can be securely encrypted and broadcasted over a local Bluetooth-style mesh network. The data packet hops seamlessly from device to device until a peer transitions to an area with 4G/5G connectivity. Once back online, that device silently relays the packet to this Spring Boot backend, which handles decryption, strict deduplication, and final ledger settlement.
 
 1. Developed a Spring Boot backend to demonstrate offline UPI payments routed via a Bluetooth‑style mesh network.
