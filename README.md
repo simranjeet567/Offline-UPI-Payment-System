@@ -1,31 +1,18 @@
 # UPI Offline Mesh — Demo
 
-A Spring Boot backend that demonstrates **offline UPI payments routed through a Bluetooth-style mesh network**. You're in a basement with zero connectivity. You send your friend ₹500. Your phone encrypts the payment, broadcasts it to nearby phones, and the packet hops device-to-device until *some* phone walks outside, gets 4G, and silently uploads it to this backend. The backend decrypts, deduplicates, and settles.
+Building a Zero-Connectivity UPI Settlement Engine in Spring Boot
+Imagine being trapped in a concrete basement with absolutely no cellular network, yet successfully transferring ₹500 to a friend. This project demonstrates how offline UPI payloads can be securely encrypted and broadcasted over a local Bluetooth-style mesh network. The data packet hops seamlessly from device to device until a peer transitions to an area with 4G/5G connectivity. Once back online, that device silently relays the packet to this Spring Boot backend, which handles decryption, strict deduplication, and final ledger settlement.
 
-This repo is the **server side** of that system, plus a software simulator of the mesh so you can demo the whole flow on a single laptop without any real Bluetooth hardware.
-<img width="1900" height="667" alt="a" src="https://github.com/user-attachments/assets/2c3fda61-3100-45cb-ae1e-c5bc5eca16ef" />
--------------------------------------------------------------------------------------------------------------------------------------------------
-<img width="1917" height="762" alt="b" src="https://github.com/user-attachments/assets/07597591-a095-476d-9015-3548b072516e" />
+1. Developed a Spring Boot backend to demonstrate offline UPI payments routed via a Bluetooth‑style mesh network.
 
+2. Implemented hybrid RSA‑OAEP + AES‑GCM encryption to ensure secure, tamper‑proof transactions across untrusted devices.
 
----
+3. Designed idempotency handling with atomic compare‑and‑set on ciphertext hashes to prevent duplicate settlements.
 
-## Table of Contents
+4. Built a simulator to model gossip‑based packet propagation and bridge node uploads for end‑to‑end demo flow.
 
-1. [What this demo proves](#what-this-demo-proves)
-2. [How to run it](#how-to-run-it)
-3. [The demo flow (step by step)](#the-demo-flow-step-by-step)
-4. [Architecture](#architecture)
-5. [The three hard problems and how they're solved](#the-three-hard-problems-and-how-theyre-solved)
-6. [File-by-file walkthrough](#file-by-file-walkthrough)
-7. [API reference](#api-reference)
-8. [Tests](#tests)
-9. [What's NOT real (and what would change for production)](#whats-not-real-and-what-would-change-for-production)
-10. [Honest limitations of the concept](#honest-limitations-of-the-concept)
+5. Integrated H2 in‑memory database and REST APIs with a dashboard UI for transaction visualization and testing.
 
----
-
-## What this demo proves
 
 The system shows three things working end to end:
 
@@ -35,56 +22,32 @@ The system shows three things working end to end:
 
 You'll see all three in the dashboard.
 
----
-
-## How to run it
-
-### Prerequisites
-
-- **JDK 17 or newer** installed and on PATH (or `JAVA_HOME` set). Check with `java -version`.
-- That's it. No database, no Redis, no Maven (the wrapper handles it). Just Java.
-
-### Run on Windows
-
-Open a terminal in the project folder and run:
-
-```cmd
-mvnw.cmd spring-boot:run
-```
-
-The first run downloads Maven (~10 MB) and all dependencies (~80 MB) — give it a couple of minutes. Subsequent runs start in a few seconds.
-
-### Run on Mac/Linux
-
-```bash
-./mvnw spring-boot:run
-```
-
-### Open the dashboard
-
-Once you see `Started UpiMeshApplication in X.XXX seconds`, open:
-
-**http://localhost:8080**
-
-You'll get a dark dashboard with everything you need to drive the demo.
-
-### Stop the server
-
-`Ctrl+C` in the terminal.
-
-### Run the tests
-
-```cmd
-mvnw.cmd test
-```
-
 The interesting one is `IdempotencyConcurrencyTest` — it fires three threads delivering the same packet simultaneously and asserts that exactly one settles.
 
 ---
 
-## The demo flow (step by step)
+## The demo flow:-
 
 The dashboard has four buttons that walk through the full pipeline. The intended sequence:
+------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1900" height="667" alt="a" src="https://github.com/user-attachments/assets/2c3fda61-3100-45cb-ae1e-c5bc5eca16ef" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1917" height="762" alt="b" src="https://github.com/user-attachments/assets/07597591-a095-476d-9015-3548b072516e" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1890" height="967" alt="c" src="https://github.com/user-attachments/assets/d698c39b-9155-49a9-a960-96aa609a07e4" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1900" height="867" alt="d" src="https://github.com/user-attachments/assets/c62c2898-8638-4dff-bea9-23bc8bf7c93c" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1897" height="867" alt="e" src="https://github.com/user-attachments/assets/c4a3a3d6-7446-4618-bb6d-b6917941d160" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1895" height="966" alt="f" src="https://github.com/user-attachments/assets/bb2954b7-8e17-42ee-b68c-ef2a07cccc7b" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1891" height="967" alt="g" src="https://github.com/user-attachments/assets/1b356ae6-30e1-497b-9ae3-a788a6bbf972" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1895" height="331" alt="h" src="https://github.com/user-attachments/assets/727c02e2-c4c8-43fe-a8c4-e5eb565eced3" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
+<img width="1855" height="555" alt="i" src="https://github.com/user-attachments/assets/929efa83-d80d-4aab-b98d-49a3b5641acb" />
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Step 1 — Compose a payment
 
@@ -377,7 +340,7 @@ The cryptography and idempotency code is essentially production-shaped. The infr
 
 ---
 
-## Honest limitations of the concept
+## few loopholes of this concept
 
 I want this README to be useful to you when someone reviews the project, so let's be straight about what this design **does not** solve. These are not implementation bugs — they're inherent to "no internet, anywhere in the chain":
 
@@ -385,25 +348,3 @@ I want this README to be useful to you when someone reviews the project, so let'
 2. **A malicious sender can double-spend offline.** With ₹500 in their account, they could send a packet to Bob in basement A, walk to basement B, and send another ₹500 to Carol. Whichever packet hits the backend first wins; the other gets `REJECTED`. Same root cause as #1.
 3. **Bluetooth in real life is hard.** Background BLE on Android is heavily throttled since Android 8. iOS peripheral mode is locked down. Two strangers' phones reliably forming a GATT connection while the apps aren't actively open is genuinely difficult and a lot of energy. This demo skips that problem entirely by simulating the mesh.
 4. **Privacy / liability.** A stranger carries your encrypted transaction packet on their phone. They can't read it, but its existence is metadata. In a real deployment you'd want to think about regulatory disclosures and what happens if a device is seized.
-
-For a college / portfolio project: name the concept honestly as **"mesh-routed deferred settlement"** rather than "real-time offline UPI," and you'll have a much stronger pitch. The cryptography and idempotency work here is real engineering and worth showing off.
-
----
-
-## Troubleshooting
-
-**`java: command not found`** — Install JDK 17+. On Windows, `winget install EclipseAdoptium.Temurin.17.JDK` or download from adoptium.net.
-
-**Port 8080 already in use** — Change `server.port` in `application.properties`.
-
-**First `mvnw.cmd` run hangs for a long time** — It's downloading Maven (~10 MB) then dependencies (~80 MB). Give it 2–3 minutes on a normal connection. After that, startup is ~5 seconds.
-
-**`mvnw.cmd : The term 'mvnw.cmd' is not recognized`** — On PowerShell you need to prefix with `.\`: `.\mvnw.cmd spring-boot:run`.
-
-**Tests fail intermittently** — The concurrency test is timing-sensitive. If it ever flakes, run it 3x; if it consistently fails on your hardware, file the actual failure output.
-
----
-
-## License
-
-Demo code, no license. Use it however you want for learning.
